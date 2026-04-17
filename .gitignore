@@ -217,3 +217,9 @@ notebooks/.ipynb_checkpoints/
 generation_report.md
 *.log
 .env
+
+# Data — downloaded and cached automatically
+data/
+
+# Scripts generated during debugging
+scripts/
