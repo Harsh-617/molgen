@@ -1,0 +1,35 @@
+# Core ML
+torch>=2.0.0
+torch-geometric>=2.3.0
+
+# Chemistry
+rdkit>=2023.3.1
+fcd-torch>=1.0.7
+
+# Data
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+tqdm
+
+# API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+pillow>=10.0.0
+
+# Config
+pydantic>=2.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio
+httpx
+
+# Dev
+jupyter
+black

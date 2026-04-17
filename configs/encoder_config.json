@@ -1,0 +1,16 @@
+{
+  "hidden_dim": 128,
+  "num_layers": 4,
+  "dropout": 0.1,
+  "learning_rate": 0.001,
+  "weight_decay": 1e-5,
+  "batch_size": 64,
+  "epochs": 100,
+  "properties": ["logp", "qed", "sa_score", "homo_lumo_gap"],
+  "loss_weights": {
+    "logp": 1.0,
+    "qed": 1.0,
+    "sa_score": 1.0,
+    "homo_lumo_gap": 1.0
+  }
+}

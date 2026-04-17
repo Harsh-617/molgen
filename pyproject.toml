@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "molgen"
+version = "0.1.0"
+description = "Conditional molecular generation with graph diffusion networks"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+  {name = "Harsh", email = "harshkudu67@gmail.com"}
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["molgen*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
