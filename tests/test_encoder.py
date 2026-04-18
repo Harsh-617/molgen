@@ -72,13 +72,11 @@ class TestMPNNEncoder:
                       multi_batch.edge_attr, multi_batch.batch)
         assert out.shape == (3, 4), f"Expected (3,4) got {out.shape}"
 
-    def test_qed_in_zero_one(self, encoder, multi_batch):
-        """QED column (index 1) must always be in [0, 1] due to sigmoid."""
-        out = encoder(multi_batch.x, multi_batch.edge_index,
-                      multi_batch.edge_attr, multi_batch.batch)
-        qed = out[:, 1]
-        assert (qed >= 0).all() and (qed <= 1).all(), \
-            f"QED out of range: {qed}"
+    def test_qed_prediction_is_finite(self, encoder, multi_batch):
+            """QED prediction is unbounded since targets are z-score normalised."""
+            out = encoder(multi_batch.x, multi_batch.edge_index,
+                        multi_batch.edge_attr, multi_batch.batch)
+            assert torch.isfinite(out[:, 1]).all()
 
     def test_output_is_finite(self, encoder, multi_batch):
         """No NaN or Inf in predictions."""

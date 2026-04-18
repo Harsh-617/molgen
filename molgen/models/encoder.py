@@ -162,7 +162,7 @@ class MPNNEncoder(nn.Module):
         # One property head per target
         # QED uses sigmoid because it's always in [0, 1]
         self.head_logp     = PropertyHead(hidden_dim, use_sigmoid=False)
-        self.head_qed      = PropertyHead(hidden_dim, use_sigmoid=True)
+        self.head_qed      = PropertyHead(hidden_dim, use_sigmoid=False)
         self.head_sa       = PropertyHead(hidden_dim, use_sigmoid=False)
         self.head_homo_lumo= PropertyHead(hidden_dim, use_sigmoid=False)
 
