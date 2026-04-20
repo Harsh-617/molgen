@@ -33,6 +33,7 @@ export default function RootLayout({
             {[
               { href: '/', label: 'Generate' },
               { href: '/evaluate', label: 'Evaluate' },
+              { href: '/explore', label: 'Explore' },
             ].map(({ href, label }) => (
               <a key={href} href={href} style={{
                 color: 'var(--muted)',
