@@ -289,10 +289,8 @@ class MolGenInference:
         n_atoms:     int,
     ) -> Optional[str]:
         """
-        Convert denoised node features + bond probabilities to a SMILES string.
-
-        Decodes atom types from node features via argmax on the one-hot portion,
-        then adds bonds where probability > 0.5.
+        Convert denoised node features + bond probabilities to SMILES.
+        Uses RDKit valence-aware bond assignment.
         """
         from rdkit.Chem import RWMol, Atom
         from rdkit import Chem
@@ -300,33 +298,67 @@ class MolGenInference:
 
         x_cpu = x.cpu()
 
-        # Decode atom types from one-hot features (first 10 dims)
-        atom_type_logits = x_cpu[:, :10]
-        atom_type_idx    = atom_type_logits.argmax(dim=-1).tolist()
+        # Decode atom types — softmax over first 10 dims for stable probabilities
+        atom_logits = x_cpu[:, :10]
+        atom_probs  = torch.softmax(atom_logits, dim=-1)
+        atom_type_idx = atom_probs.argmax(dim=-1).tolist()
+
+        # Map to valid atom symbols (exclude 'other')
+        valid_symbols = ["C", "N", "O", "F", "P", "S", "Cl", "Br", "I"]
+        symbols = []
+        for idx in atom_type_idx:
+            if idx < len(valid_symbols):
+                symbols.append(valid_symbols[idx])
+            else:
+                symbols.append("C")  # default to carbon for 'other'
 
         mol = RWMol()
-        for idx in atom_type_idx:
-            symbol = ATOM_TYPES[idx] if idx < len(ATOM_TYPES) - 1 else "C"
-            mol.AddAtom(Atom(symbol))
+        for sym in symbols:
+            mol.AddAtom(Atom(sym))
 
-        # Add bonds where probability > 0.5 (undirected — only add once)
-        added_bonds = set()
-        src_list = edge_index[0].cpu().tolist()
-        dst_list = edge_index[1].cpu().tolist()
-        probs    = bond_probs.cpu().tolist()
+        # Sort edges by probability and add greedily respecting valence
+        src_list  = edge_index[0].cpu().tolist()
+        dst_list  = edge_index[1].cpu().tolist()
+        probs     = bond_probs.cpu().tolist()
 
+        # Collect undirected edges with their probabilities
+        edge_map: dict[tuple, float] = {}
         for s, d, p in zip(src_list, dst_list, probs):
-            if s < d and p > 0.5:
-                bond_key = (s, d)
-                if bond_key not in added_bonds:
-                    try:
-                        mol.AddBond(s, d, Chem.rdchem.BondType.SINGLE)
-                        added_bonds.add(bond_key)
-                    except Exception:
-                        pass
+            key = (min(s, d), max(s, d))
+            edge_map[key] = max(edge_map.get(key, 0), p)
+
+        # Sort by probability descending — add high-confidence bonds first
+        sorted_edges = sorted(edge_map.items(), key=lambda x: x[1], reverse=True)
+
+        # Max valence per atom type
+        max_valence = {"C": 4, "N": 3, "O": 2, "F": 1,
+                    "P": 5, "S": 6, "Cl": 1, "Br": 1, "I": 1}
+        valence_used = [0] * n_atoms
+
+        for (s, d), p in sorted_edges:
+            if p < 0.3:   # threshold — skip low-confidence bonds
+                break
+            sym_s = symbols[s]
+            sym_d = symbols[d]
+            max_v_s = max_valence.get(sym_s, 4)
+            max_v_d = max_valence.get(sym_d, 4)
+            if valence_used[s] < max_v_s and valence_used[d] < max_v_d:
+                try:
+                    mol.AddBond(s, d, Chem.rdchem.BondType.SINGLE)
+                    valence_used[s] += 1
+                    valence_used[d] += 1
+                except Exception:
+                    pass
 
         try:
             Chem.SanitizeMol(mol)
             return Chem.MolToSmiles(mol, canonical=True)
         except Exception:
-            return None
+            # Try adding implicit Hs to fix valence issues
+            try:
+                mol2 = Chem.AddHs(mol)
+                Chem.SanitizeMol(mol2)
+                mol3 = Chem.RemoveHs(mol2)
+                return Chem.MolToSmiles(mol3, canonical=True)
+            except Exception:
+                return None
