@@ -339,6 +339,17 @@ def train(
         )
         print(f"Resumed epoch {start_epoch}, phase {loaded_phase}, "
               f"best val {best_val:.4f}")
+        
+    
+    if resume_path and os.path.exists(resume_path):
+        start_epoch, best_val, history, loaded_phase = load_checkpoint(
+            resume_path, denoiser, conditioner, optimizer, device
+        )
+        # Reset best_val if switching phases so Phase 3 can save its own checkpoint
+        if loaded_phase != phase:
+            best_val = float("inf")
+            print(f"Phase changed {loaded_phase}→{phase}: resetting best val loss.")
+        print(f"Resumed epoch {start_epoch}, best val {best_val:.4f}")
 
     # ── Training loop ─────────────────────────────────────────────────────────
     print(f"\nStarting from epoch {start_epoch + 1}/{cfg['epochs']}")
