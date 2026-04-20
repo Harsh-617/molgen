@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg:       #080c0f;
+  --surface:  #0e1419;
+  --border:   #1e2a32;
+  --accent:   #00e5a0;
+  --accent2:  #0090ff;
+  --text:     #e2edf2;
+  --muted:    #4a6070;
+  --danger:   #ff4d6a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+.mono { font-family: 'IBM Plex Mono', monospace; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
